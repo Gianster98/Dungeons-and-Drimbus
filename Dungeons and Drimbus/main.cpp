@@ -14,6 +14,7 @@ using namespace std;
 
 //rolls a die with entered amount of sides
 int d(int die);
+void Input(char &userChoice, char limit = 'b');
 
 class Character {
 public:
@@ -23,7 +24,7 @@ public:
     int level;
     int init;
     //attackDie
-    double attack;
+    int attack;
     int attackBonus;
     bool hasCompanion = false;
     string companion = "nobody";
@@ -41,7 +42,7 @@ public:
         
         //sets class
         cout << "What class are you? Fighter (A), Sorcerer (B), or Thief (C)? ";
-        cin >> classType;
+        Input(classType, 'c');
         switch (classType){
             case 'a':
             case 'A':
@@ -76,6 +77,7 @@ public:
         ac = NPCac + (level);
         init = NPCinit + (level/2);
         attackBonus = NPCattackBonus + level/2;
+        attack = NPCattack;
     }
     
     //sets default fighter stats
@@ -146,7 +148,6 @@ public:
 void Fight(Character &a, Character &b);
 int attack(Character a, Character b);
 int initiative (Character a, Character b);
-void Input(char &userChoice);
 bool check(Character player, bool check);
 void choice1 (Character &player, Character &Jorgun, bool &check1);
 void choice2 (Character &player, Character &Jorgun, bool &check2);
@@ -159,32 +160,21 @@ void campaign(Character &player);
 
 int main() {
     
+    srand((unsigned int)(time(0)));
+    
     //welcomes user
     cout << "Welcome to Dungeons 'n' Drimbus" << endl << endl;
     
     //creates and initializes player's character
     Character player;
     player.set();
-   /*
-    //sets stats for a dragon
-    Character dragon;
-    dragon.hp = 10;
-    dragon.ac = 5;
-    dragon.level = 5;
-    dragon.init = -2;
-    dragon.attack = 3;
-    dragon.attackBonus = 1;
-    dragon.name = "Dragon";
-    
-    //starts fight between user and dragon
-    Fight(player, dragon);
-   */
     campaign(player);
     
     return 0;
 }
 
-void Input (char &userChoice, char limit = 'b'){
+//checks input for errors
+void Input (char &userChoice, char limit){
     cin >> userChoice;
     limit = toupper(limit);
     userChoice = toupper(userChoice);
@@ -193,8 +183,10 @@ void Input (char &userChoice, char limit = 'b'){
         cin >> userChoice;
         userChoice = toupper(userChoice);
     }
+    cout << endl;
 }
 
+//checks if user has survived and completed a checkpoint
 bool check(Character player, bool check){
     if (player.hp > 0 && check == true){
         return true;
@@ -208,8 +200,11 @@ bool check(Character player, bool check){
 //handles fights until someone is dead or player disengages
 void Fight(Character &player, Character &opponent) {
     //Beginning prompt
-    char userEngage;
-    bool engage;
+    char userEngage = 'y';
+    bool engage = true;
+    cout << "Prepare to fight " << opponent.name << endl;
+    
+    /*
     cout << "Would you like to fight a " << opponent.name << "? (Y or N)";
     cin >> userEngage;
     cout << endl << endl;
@@ -225,24 +220,31 @@ void Fight(Character &player, Character &opponent) {
     else {
         engage = false;
     }
+     */
     
     //checks initiative order
     int fightOrder = initiative(player, opponent);
     
     //makes sure player is still fighting and both are still alive
-    while (player.hp > 0 && opponent.hp > 0 && engage == true){
+    while (player.hp > 0 && opponent.hp > 0){
         
         //executes each player's attack
-        switch(fightOrder){
-        case 1:
-                opponent.hp -= attack(player, opponent);
-                player.hp -= attack(opponent, player);
-            break;
-        case 2:
-                player.hp -= attack(player, opponent);
-                opponent.hp -= attack(opponent, player);
-            break;
+        if (engage == true){
+            switch(fightOrder){
+                case 1:
+                    opponent.hp -= attack(player, opponent);
+                    player.hp -= attack(opponent, player);
+                    break;
+                case 2:
+                    player.hp -= attack(opponent, player);
+                    opponent.hp -= attack(player, opponent);
+                    break;
+            }
         }
+        else {
+            player.hp -= attack(opponent,player);
+        }
+        
         
         //if both are alive, asks if player wants to continue fighting
         if (opponent.hp > 0 && player.hp > 0){
@@ -270,13 +272,12 @@ void Fight(Character &player, Character &opponent) {
         }
         
     }
-
+    
 }
 
 //rolls a die with x sides
 int d(int die) {
     int roll;
-    srand((unsigned int)(time(0)));
     roll = ((rand()%die)+1);
     return roll;
 }
@@ -359,13 +360,13 @@ void campaign (Character &player){
         }
     }
     
-
+    
 }
 
 void choice1 (Character &player, Character &Jorgun, bool &check1){
     char userChoice;
     Input(userChoice, 'b');
-//    while (userChoice != 'A' || userChoice != 'a' || userChoice != 'B' || userChoice != 'b'){
+    //    while (userChoice != 'A' || userChoice != 'a' || userChoice != 'B' || userChoice != 'b'){
     //Go Downstairs
     if (userChoice == 'A' || userChoice == 'a'){
         check1 = true;
@@ -460,253 +461,254 @@ void choice4 (Character &player, Character &Jorgun, Character &realJorgun, bool 
             }
         }
     }
-     else {
-         cout << "You ask Jorgun what happened and he looks at you, confused. He claims to have never met you in his life. You explain that you are the man he asked for help at the Tarnished Tack and he replies that he was just running there now to ask for help. He quickly explains that his house was torn down, his child and wife taking by a shape shifting demon that took his form. He begs that you help him get his family back." << endl << endl;
-         cout << "Do you believe him?" << endl << "Yes, help. (A) " << endl << "No, he must be the imposter! (B) ";
-         Input(userChoice, 'b');
-                             
-         //Help Real Jorgun
-         if (userChoice == 'A' || userChoice == 'a'){
-             player.companion = realJorgun.name;
-         }
-         //Continue Alone
-         else if (userChoice == 'B' || userChoice == 'b'){
-             cout << "You stare the new Jorgun down. His crazed eyes unsettle you. You draw your sword" << endl;
-             Fight(player, realJorgun);
-         }
-     }
-
-                         
-     //Sets appropriate variables true or false
-     if (player.hp > 0 && Jorgun.hp > 0){
-         check4 = true;
-     }
-     else {
-         if (player.hp <= 0){
-             cout << "You died.";
-         }
-         else {
-             cout << "With the demon defeated, the real Jorgun thanks you. You head out with him towards his home. You encounter a burnt down barn. In one of the stalls, you discover a passage leading undergrounf. You carefully head down to find some sort of confusing chamber. In a room on the Northern wall, Jorgun rushes in to find his infant child in the center of a pentagram. He is relieved until he looks up. His wife lies dead at the tip. He seems overcome with grief. You try to help him up and you thanks you for your help but says he needs a moment.";
-
-         }
-         check4 = false;
-     }
+    else {
+        cout << "You ask Jorgun what happened and he looks at you, confused. He claims to have never met you in his life. You explain that you are the man he asked for help at the Tarnished Tack and he replies that he was just running there now to ask for help. He quickly explains that his house was torn down, his child and wife taking by a shape shifting demon that took his form. He begs that you help him get his family back." << endl << endl;
+        cout << "Do you believe him?" << endl << "Yes, help. (A) " << endl << "No, he must be the imposter! (B) ";
+        Input(userChoice, 'b');
+        
+        //Help Real Jorgun
+        if (userChoice == 'A' || userChoice == 'a'){
+            player.companion = realJorgun.name;
+        }
+        //Continue Alone
+        else if (userChoice == 'B' || userChoice == 'b'){
+            cout << "You stare the new Jorgun down. His crazed eyes unsettle you. You draw your sword" << endl;
+            Fight(player, realJorgun);
+        }
+    }
+    
+    
+    //Sets appropriate variables true or false
+    if (player.hp > 0 && Jorgun.hp > 0){
+        check4 = true;
+    }
+    else {
+        if (player.hp <= 0){
+            cout << "You died.";
+        }
+        else {
+            cout << "With the demon defeated, the real Jorgun thanks you. You head out with him towards his home. You encounter a burnt down barn. In one of the stalls, you discover a passage leading undergrounf. You carefully head down to find some sort of confusing chamber. In a room on the Northern wall, Jorgun rushes in to find his infant child in the center of a pentagram. He is relieved until he looks up. His wife lies dead at the tip. He seems overcome with grief. You try to help him up and you thanks you for your help but says he needs a moment.";
+            
+        }
+        check4 = false;
+    }
 }
- 
+
 void choice5(Character &player, Character &Jorgun, bool &check5){
-                         
-     Character skeleton;
-     skeleton.setNPC("Skeleton", 10, 5, 1, 0, 2, 1);
-                         
-     Item healthPotion;
-     healthPotion.set("Health Potion", 0, 0, d(8));
-                         
-     Item sword;
-     sword.set("Sword", 2);
-                         
-     Item cloak;
-     cloak.set("Cloak", 0, 2);
-                         
-     char userChoice;
-                         
-     if (player.hasCompanion == true){
-         cout << "Jorgun thanks you for handling the situation but seems a bit shaken. Nevertheless, you trek onwards." << endl << endl;
-         cout << "After an hour or so you begin to crest a hill. Jorgun tells you the house is not far off. However, you also spot what looks like a fallen tower a bit off to your left. Jorgun says time is imminent and suggests focusing on the house." << endl << "Go to the Tower (A)" << endl << "Continue towards the House (B) ";
-     }
-     else {
-         cout << "After an hour or so you begin to crest a hill. The house is not far off. However, you also spot what looks like a fallen tower a bit off to your left. The sun seems to be setting." << endl << endl << "Go to the Tower (A)" << endl << "Continue towards the House (B) ";
-     }
-                         
-     Input(userChoice, 'b');
-                         
-     //Go to Tower (8A)
-     if (userChoice == 'A' || userChoice == 'a'){
-         cout << endl << endl << "After about half an hour, you walk up towards the fallen stone tower. Creeping carefully around fallen bricks and gravestones. A breeze hits your back as you notice a chest in what was once an entrance hall for the tower." << endl << "Check the Chest (A)" << endl << "Turn Back (B) ";
-         Input(userChoice, 'b');
-         //Check Chest
-         if (userChoice == 'A' || userChoice == 'a'){
-             cout << "You walk up towards the chest and find a potion, glistening sword, and a cloak." << endl;
-             cout << "Grab the Sword (A)" << endl << "Grab the Potion (B)" << endl << "Grab the Cloak (C)" << endl << "Leave (D) ";
-             Input(userChoice, 'd');
-             //Grab Sword
-             if (userChoice == 'A' || userChoice == 'a') {
-                 sword.pickUp(player);
-                 cout << endl << "You pick up a hefty sword and your attacks feel stronger. The other items disappear." << endl << endl;
-             }
-             //Grab Potion
-             else if (userChoice == 'B' || userChoice == 'b'){
-                 healthPotion.pickUp(player);
-                 cout << endl << "You drink the red potion and suddenly feel healthier. You now have " << player.hp << " hp. The other items disappear." << endl << endl;
-             }
-             //Grab Cloak
-             else if (userChoice == 'C' || userChoice == 'c'){
-                 cloak.pickUp(player);
-                 int damage = d(2);
-                 cout << endl << "The cloak is thick and offers protection but a thin puff of yellow gas poisons you and you take " << damage << " points of damage. The other items disappear." << endl << endl;
-                 player.hp -= damage;
-                                     
-             }
-             cout << "As you turn, you are confronted by a skeleton, freshly out of the grave. Clawing at you. " << endl;
-             if (player.hasCompanion == true){
-                 cout << "Jorgun draws a dagger and stabs at a second skeleton clawing at your back, as the one running at you draws near." << endl;
-             }
-             Fight(player, skeleton);
-             //Player survives
-             if (player.hp > 0) {
-                 if (player.hasCompanion == true){
-                     cout << "The skeleton falls apart, still clawing and becomes lifeless. Jorgun is shaken, and urges that you move onward" << endl << endl;
-                 }
-                 else {
-                     cout << "The skeleton falls apart, still clawing and becomes lifeless. You are a bit shaken but move onward" << endl << endl;
-                 }
-                 check5 = true;
-             }
-             else {
-                 check5 = false;
-             }
-         }
-                             
-     }
-     //Continue to House (8B)
-     else if (userChoice == 'B' || userChoice == 'b'){
-         cout << "You continue on towards the house." << endl;
-         check5 = true;
-     }
-     /*else {
-         error(userChoice);
+    
+    Character skeleton;
+    skeleton.setNPC("Skeleton", 10, 5, 1, 0, 2, 1);
+    
+    Item healthPotion;
+    healthPotion.set("Health Potion", 0, 0, d(8));
+    
+    Item sword;
+    sword.set("Sword", 2);
+    
+    Item cloak;
+    cloak.set("Cloak", 0, 2);
+    
+    char userChoice;
+    
+    if (player.hasCompanion == true){
+        cout << "Jorgun thanks you for handling the situation but seems a bit shaken. Nevertheless, you trek onwards." << endl << endl;
+        cout << "After an hour or so you begin to crest a hill. Jorgun tells you the house is not far off. However, you also spot what looks like a fallen tower a bit off to your left. Jorgun says time is imminent and suggests focusing on the house." << endl << "Go to the Tower (A)" << endl << "Continue towards the House (B) ";
+    }
+    else {
+        cout << "After an hour or so you begin to crest a hill. The house is not far off. However, you also spot what looks like a fallen tower a bit off to your left. The sun seems to be setting." << endl << endl << "Go to the Tower (A)" << endl << "Continue towards the House (B) ";
+    }
+    
+    Input(userChoice, 'b');
+    
+    //Go to Tower (8A)
+    if (userChoice == 'A' || userChoice == 'a'){
+        cout << endl << endl << "After about half an hour, you walk up towards the fallen stone tower. Creeping carefully around fallen bricks and gravestones. A breeze hits your back as you notice a chest in what was once an entrance hall for the tower." << endl << "Check the Chest (A)" << endl << "Turn Back (B) ";
+        Input(userChoice, 'b');
+        //Check Chest
+        if (userChoice == 'A' || userChoice == 'a'){
+            cout << "You walk up towards the chest and find a potion, glistening sword, and a cloak." << endl;
+            cout << "Grab the Sword (A)" << endl << "Grab the Potion (B)" << endl << "Grab the Cloak (C)" << endl << "Leave (D) ";
+            Input(userChoice, 'd');
+            //Grab Sword
+            if (userChoice == 'A' || userChoice == 'a') {
+                sword.pickUp(player);
+                cout << endl << "You pick up a hefty sword and your attacks feel stronger. The other items disappear." << endl << endl;
+            }
+            //Grab Potion
+            else if (userChoice == 'B' || userChoice == 'b'){
+                healthPotion.pickUp(player);
+                cout << endl << "You drink the red potion and suddenly feel healthier. You now have " << player.hp << " hp. The other items disappear." << endl << endl;
+            }
+            //Grab Cloak
+            else if (userChoice == 'C' || userChoice == 'c'){
+                cloak.pickUp(player);
+                int damage = d(2);
+                cout << endl << "The cloak is thick and offers protection but a thin puff of yellow gas poisons you and you take " << damage << " points of damage. The other items disappear." << endl << endl;
+                player.hp -= damage;
+                
+            }
+            cout << "As you turn, you are confronted by a skeleton, freshly out of the grave. Clawing at you. " << endl;
+            if (player.hasCompanion == true){
+                cout << "Jorgun draws a dagger and stabs at a second skeleton clawing at your back, as the one running at you draws near." << endl;
+            }
+            Fight(player, skeleton);
+            //Player survives
+            if (player.hp > 0) {
+                if (player.hasCompanion == true){
+                    cout << "The skeleton falls apart, still clawing and becomes lifeless. Jorgun is shaken, and urges that you move onward" << endl << endl;
+                }
+                else {
+                    cout << "The skeleton falls apart, still clawing and becomes lifeless. You are a bit shaken but move onward" << endl << endl;
+                }
+                check5 = true;
+            }
+            else {
+                check5 = false;
+            }
+        }
+        
+    }
+    //Continue to House (8B)
+    else if (userChoice == 'B' || userChoice == 'b'){
+        cout << "You continue on towards the house." << endl;
+        check5 = true;
+    }
+    /*else {
+     error(userChoice);
      }*/
-                         
+    
 }
-                     
+
 
 void Puzzle(Character &player, Character &Jorgun, bool &puzzle){
-     char userChoice;
-     cout << "After a bit of walking, you and Jorgun come up on a burnt down barn. Jorgun looks at the rubble and weeps. You walk through the ashes and find several empty stables." << endl << "Further down the line you find an odd shaped hole in the ground." << endl << "As you descend you find an odd chamber. At the center there are red, blue, yellow, and black colored containers and four doors (one along each wall)." << endl << endl;
-                         
-     //Puzzle
-     bool yellowRoom = false;
-     bool redRoom = false;
-     bool blueRoom = false;
-     bool blackRoom = false;
-                         
-     while (blackRoom == false){
-         cout << "Check Containers (A)" << endl << "Check North Room (B) " << endl << "Check East Room (C)" << endl << "Check West Room (D) " << endl << "Check South Room (E) ";
-         cin >> userChoice;
-                             
-         //Player finds key if all other rooms are completed
-         if ((userChoice == 'A' || userChoice == 'a') && yellowRoom == true && blueRoom == true && redRoom == true){
-             cout << "Inside the black container you find a black key that seems to match the Northern Door. " << endl;
-             blackRoom = true;
-         }
-         //Checking containers before all rooms are completed
-         else if ((userChoice == 'A' || userChoice == 'a') && (yellowRoom == false || redRoom == false || blueRoom == false)){
-             if (yellowRoom == true){
-                 cout << "The yellow box has closed over and become a solid cube." << endl;
-             }
-             if (redRoom == true){
-                 cout << "The red box has closed over and become a solid cube." << endl;
-             }
-             if (blueRoom == true){
-                 cout << "The blue box has closed over and become a solid cube." << endl;
-             }
-             if (redRoom == false && redRoom == false && blueRoom == false) {
-                 cout << "You stare intently at the containers and all of a sudden..." << endl << "Nothing." << endl;
-             }
-         }
-         //Black door is locked
-         else if (userChoice == 'B' || userChoice == 'b'){
-             cout << "The northern door is locked but you notice a small key hole in the door handle." << endl;
-         }
-         //First entrance into east/red room
-         else if ((userChoice == 'C' || userChoice == 'c') && redRoom == false){
-             cout << "You enter a room with a long dining table and several different plates arranged. They are full of the most delicious food you have ever smelt. The door you entered through locks behind you. What do you do?" << endl << endl << "Eat Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
-             Input(userChoice, 'c');
-             while (userChoice != 'A' && userChoice != 'a'){
-             cout << "Mmmm... Delicious." << endl << endl << "Eat Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
-             Input(userChoice, 'c');
-             }
-             cout << "You ingest this heavenly food and your stomach begins to bloat. Ouch. That hurts." << endl << endl << "What do you do?" << endl;
-             cout << "Eat More Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
-             while (userChoice != 'C' && userChoice != 'c'){
-                 player.hp--;
-                 cout << "The smells of the food intoxicate you and you can't help but to eat a little more. You take a point of damage. You have " << player.hp << " hp points left." << endl << endl;
-                 cout << "Eat More Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
-                 Input(userChoice, 'c');
-             }
-             cout << "As you flip the bowls the food in them begins to disappear. The smell dissipates and your hunger subsides. You finish flipping them all and the door you entered through opens again. You are left with a slight lingering hunger. " << endl << endl;
-             redRoom = true;
-         }
-         //Repeated entrance into east/red room
-         else if ((userChoice == 'C' || userChoice == 'c') && redRoom == true){
-             cout << "The room is as you left it." << endl << endl;
-         }
-         //First entrance into west/blue room
-         else if ((userChoice == 'D' || userChoice == 'd') && blueRoom == false){
-             cout << "You enter the room and are immediately hit by a haze. Your eyes feel heavy as the door shuts behind you." << endl << "In front of you, the floor is littered with plush pillows and velvet throws. You feel the weight of your body on your knees. You are very tired." << endl << "What do you do?" << endl << endl << "Lay Down (A)" << endl << "Slap Yourself to Stay Awake (B) " << endl << "Flip the mattresses over (C) ";
-             Input(userChoice, 'c');
-             while (userChoice != 'A' && userChoice != 'a'){
-                 if (userChoice == 'B' || userChoice == 'b'){
-                     cout << "Ouch. You take a point of damage." << endl;
-                     player.hp--;
-                 }
-                 else if (userChoice == 'C' || userChoice == 'c'){
-                     cout << "The other side looks even softer. You yawn." << endl;
-                 }
-                 else {
-                     cout << "Incorrect choice. Try again" << endl;
-                 }
-                 cout << "What do you do?" << endl << endl << "Lay Down (A)" << endl << "Slap Yourself to Stay Awake (B) " << endl << "Flip the mattresses over (C) ";
-                 Input(userChoice, 'c');
-             }
-             int restore = d(4);
-             cout << "As you lay down you feel yourself encompassed by the warm, warm sheets. You feel pleasant. You awaken what feels like hours later, very rested. You gain " << restore << " hp." << endl << "The door is wide open and all of the items in the room but the mattress you are on, are gone." << endl << "You feel someone has been here." << endl << "You feel violated" << endl;
-             if (player.hasCompanion == true){
-                 cout << "Jorgun is gone too..." << endl;
-             }
-             cout << endl;
-             player.hp += restore;
-             blueRoom = true;
-                                 
-         }
-         //Repeated entrance into west/blue room
-         else if ((userChoice == 'D' || userChoice == 'd') && blueRoom == true){
-             cout << "The room is as you left it." << endl << endl;
-         }
-         //First entrance into south/yellow room
-         else if ((userChoice == 'E' || userChoice == 'e') && yellowRoom == false){
-             cout << "As you open the door you are immediately confronted with a curtain. You cross through, hearing the door shut behind you." << endl << "Directly in front of you is what looks like a watery curtain." << endl << "You peer to the other side and notice there is a gorgeous, completely naked woman on the other side. You are entranced and she beckons you over seductively." << endl << endl;
-             cout << "What do you do?" << endl << "Cross over to the other side (A)" << endl << "Tear off all your fucking clothes (B)" << endl << "Look away (C) ";
-             Input(userChoice, 'c');
-             while (userChoice != 'B' && userChoice != 'b'){
-                 if (userChoice == 'A' || userChoice == 'a'){
-                     cout << "You excitedly cross over to the other side. Perhaps a bit too eagerly, as you are confronted with nothing. You turn around and the water curtain remains with nothing on the other side. You cross back and the woman is there again, beckoning." << endl << endl;
-                 }
-                 else if (userChoice == 'C' || userChoice == 'c'){
-                     cout << "You turn around only to hear her cry: " << player.name << " did I upset you?" << endl << "Her voice enthralls you and you turn around to face her." << endl << endl;
-                 }
-                 else {
-                     cout << "Incorrect choice. Try again." << endl << endl;
-                 }
-                 cout << "What do you do?" << endl << "Cross over to the other side (A)" << endl << "Tear off all your fucking clothes (B)" << endl << "Look away (C) ";
-                 Input(userChoice, 'c');
-             }
-             cout << "As you quickly toss your clothes aside, you see the woman on the other side begin to get more and more giddy, awaiting your arrival." << endl << "You burst through the watery curtain and find only a studded leather chest plate. You put it on and - although a bit disappointed - feel more secure. You cross back over, put on your clothes, and exit through the now open door." << endl << endl;
-             player.ac++;
-             yellowRoom = true;
-         }
-         //Repeated entrance into south/yellow room
-         else if ((userChoice == 'E' || userChoice == 'e') && yellowRoom == true){
-             cout << "The room is as you left it." << endl << endl;
-         }
-         //error
-         else {
-             cout << "Incorrect choice. Try again." << endl;
-         }
-     }
-                         
-     if (blackRoom == true && player.hp > 0){
-         puzzle = true;
-     }
+    char userChoice;
+    cout << "After a bit of walking, you and Jorgun come up on a burnt down barn. Jorgun looks at the rubble and weeps. You walk through the ashes and find several empty stables." << endl << "Further down the line you find an odd shaped hole in the ground." << endl << "As you descend you find an odd chamber. At the center there are red, blue, yellow, and black colored containers and four doors (one along each wall)." << endl << endl;
+    
+    //Puzzle
+    bool yellowRoom = false;
+    bool redRoom = false;
+    bool blueRoom = false;
+    bool blackRoom = false;
+    
+    while (blackRoom == false){
+        cout << "Check Containers (A)" << endl << "Check North Room (B) " << endl << "Check East Room (C)" << endl << "Check West Room (D) " << endl << "Check South Room (E) ";
+        cin >> userChoice;
+        
+        //Player finds key if all other rooms are completed
+        if ((userChoice == 'A' || userChoice == 'a') && yellowRoom == true && blueRoom == true && redRoom == true){
+            cout << "Inside the black container you find a black key that seems to match the Northern Door. " << endl;
+            blackRoom = true;
+        }
+        //Checking containers before all rooms are completed
+        else if ((userChoice == 'A' || userChoice == 'a') && (yellowRoom == false || redRoom == false || blueRoom == false)){
+            if (yellowRoom == true){
+                cout << "The yellow box has closed over and become a solid cube." << endl;
+            }
+            if (redRoom == true){
+                cout << "The red box has closed over and become a solid cube." << endl;
+            }
+            if (blueRoom == true){
+                cout << "The blue box has closed over and become a solid cube." << endl;
+            }
+            if (redRoom == false && redRoom == false && blueRoom == false) {
+                cout << "You stare intently at the containers and all of a sudden..." << endl << "Nothing." << endl;
+            }
+        }
+        //Black door is locked
+        else if (userChoice == 'B' || userChoice == 'b'){
+            cout << "The northern door is locked but you notice a small key hole in the door handle." << endl;
+        }
+        //First entrance into east/red room
+        else if ((userChoice == 'C' || userChoice == 'c') && redRoom == false){
+            cout << "You enter a room with a long dining table and several different plates arranged. They are full of the most delicious food you have ever smelt. The door you entered through locks behind you. What do you do?" << endl << endl << "Eat Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
+            Input(userChoice, 'c');
+            while (userChoice != 'A' && userChoice != 'a'){
+                cout << "Mmmm... Delicious." << endl << endl << "Eat Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
+                Input(userChoice, 'c');
+            }
+            cout << "You ingest this heavenly food and your stomach begins to bloat. Ouch. That hurts." << endl << endl << "What do you do?" << endl;
+            cout << "Eat More Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
+            Input(userChoice, 'c');
+            while (userChoice != 'C' && userChoice != 'c'){
+                player.hp--;
+                cout << "The smells of the food intoxicate you and you can't help but to eat a little more. You take a point of damage. You have " << player.hp << " hp points left." << endl << endl;
+                cout << "Eat More Food (A)" << endl << "Cut the Food Open (B) " << endl << "Flip the Bowls (C) ";
+                Input(userChoice, 'c');
+            }
+            cout << "As you flip the bowls the food in them begins to disappear. The smell dissipates and your hunger subsides. You finish flipping them all and the door you entered through opens again. You are left with a slight lingering hunger. " << endl << endl;
+            redRoom = true;
+        }
+        //Repeated entrance into east/red room
+        else if ((userChoice == 'C' || userChoice == 'c') && redRoom == true){
+            cout << "The room is as you left it." << endl << endl;
+        }
+        //First entrance into west/blue room
+        else if ((userChoice == 'D' || userChoice == 'd') && blueRoom == false){
+            cout << "You enter the room and are immediately hit by a haze. Your eyes feel heavy as the door shuts behind you." << endl << "In front of you, the floor is littered with plush pillows and velvet throws. You feel the weight of your body on your knees. You are very tired." << endl << "What do you do?" << endl << endl << "Lay Down (A)" << endl << "Slap Yourself to Stay Awake (B) " << endl << "Flip the mattresses over (C) ";
+            Input(userChoice, 'c');
+            while (userChoice != 'A' && userChoice != 'a'){
+                if (userChoice == 'B' || userChoice == 'b'){
+                    cout << "Ouch. You take a point of damage." << endl;
+                    player.hp--;
+                }
+                else if (userChoice == 'C' || userChoice == 'c'){
+                    cout << "The other side looks even softer. You yawn." << endl;
+                }
+                else {
+                    cout << "Incorrect choice. Try again" << endl;
+                }
+                cout << "What do you do?" << endl << endl << "Lay Down (A)" << endl << "Slap Yourself to Stay Awake (B) " << endl << "Flip the mattresses over (C) ";
+                Input(userChoice, 'c');
+            }
+            int restore = d(4);
+            cout << "As you lay down you feel yourself encompassed by the warm, warm sheets. You feel pleasant. You awaken what feels like hours later, very rested. You gain " << restore << " hp." << endl << "The door is wide open and all of the items in the room but the mattress you are on, are gone." << endl << "You feel someone has been here." << endl << "You feel violated" << endl;
+            if (player.hasCompanion == true){
+                cout << "Jorgun is gone too..." << endl;
+            }
+            cout << endl;
+            player.hp += restore;
+            blueRoom = true;
+            
+        }
+        //Repeated entrance into west/blue room
+        else if ((userChoice == 'D' || userChoice == 'd') && blueRoom == true){
+            cout << "The room is as you left it." << endl << endl;
+        }
+        //First entrance into south/yellow room
+        else if ((userChoice == 'E' || userChoice == 'e') && yellowRoom == false){
+            cout << "As you open the door you are immediately confronted with a curtain. You cross through, hearing the door shut behind you." << endl << "Directly in front of you is what looks like a watery curtain." << endl << "You peer to the other side and notice there is a gorgeous, completely naked woman on the other side. You are entranced and she beckons you over seductively." << endl << endl;
+            cout << "What do you do?" << endl << "Cross over to the other side (A)" << endl << "Tear off all your fucking clothes (B)" << endl << "Look away (C) ";
+            Input(userChoice, 'c');
+            while (userChoice != 'B' && userChoice != 'b'){
+                if (userChoice == 'A' || userChoice == 'a'){
+                    cout << "You excitedly cross over to the other side. Perhaps a bit too eagerly, as you are confronted with nothing. You turn around and the water curtain remains with nothing on the other side. You cross back and the woman is there again, beckoning." << endl << endl;
+                }
+                else if (userChoice == 'C' || userChoice == 'c'){
+                    cout << "You turn around only to hear her cry: " << player.name << " did I upset you?" << endl << "Her voice enthralls you and you turn around to face her." << endl << endl;
+                }
+                else {
+                    cout << "Incorrect choice. Try again." << endl << endl;
+                }
+                cout << "What do you do?" << endl << "Cross over to the other side (A)" << endl << "Tear off all your fucking clothes (B)" << endl << "Look away (C) ";
+                Input(userChoice, 'c');
+            }
+            cout << "As you quickly toss your clothes aside, you see the woman on the other side begin to get more and more giddy, awaiting your arrival." << endl << "You burst through the watery curtain and find only a studded leather chest plate. You put it on and - although a bit disappointed - feel more secure. You cross back over, put on your clothes, and exit through the now open door." << endl << endl;
+            player.ac++;
+            yellowRoom = true;
+        }
+        //Repeated entrance into south/yellow room
+        else if ((userChoice == 'E' || userChoice == 'e') && yellowRoom == true){
+            cout << "The room is as you left it." << endl << endl;
+        }
+        //error
+        else {
+            cout << "Incorrect choice. Try again." << endl;
+        }
+    }
+    
+    if (blackRoom == true && player.hp > 0){
+        puzzle = true;
+    }
     
 }
 
@@ -745,5 +747,3 @@ void End (Character &player, Character &Jorgun){
         cout << "This room..." << endl << "It makes no sense... This enigma is..." << endl << "it's too much." << endl << endl << "You snap your neck and fall limp on the ground." << endl << endl;
     }
 }
-
-                     
